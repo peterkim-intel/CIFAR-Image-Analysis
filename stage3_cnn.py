@@ -32,28 +32,63 @@ class CIFAR10_CNN(nn.Module):
         )
 
         # ── Block 3: High-level feature composition ───────────────────────────
-        # in_channels=64 → matches Block 2's out_channels
-        # out_channels=128 → more filters again; this layer combines textures into
-        #                     object-level features (e.g. "fur + round shape = cat face")
-        # No MaxPool here — at 8×8 we're already small; pooling again → 4×4 loses too much
         self.block3 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=3, padding=1), # (B, 64, 8, 8) → (B, 128, 8, 8)
             nn.BatchNorm2d(128),
             nn.ReLU(),                                    # output: (B, 128, 8, 8)
         )
 
+        # ── Block 4: Fine-grained discrimination ──────────────────────────────
+        # Added because the model plateaued at 88% — it could distinguish broad
+        # categories but struggled with similar classes (cat vs dog, car vs truck).
+        # An extra conv layer at the same spatial size (8×8) lets the model learn
+        # more subtle combinations of Block 3's features without further shrinking.
+        # We use two conv layers in sequence (no pool between) to double the
+        # receptive field depth cheaply — a pattern borrowed from VGG architecture.
+        self.block4 = nn.Sequential(
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),# (B, 128, 8, 8) → (B, 256, 8, 8)
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),# (B, 256, 8, 8) → (B, 256, 8, 8)
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),                           # output: (B, 256, 4, 4)
+        )
+
+        # ── Classifier: Convert feature maps → 10 class scores ───────────────
+        # Block 4 output: 256 channels × 4×4 spatial = 4,096 values per image
+        # Two dropout layers: one after the first linear (heavy regularization),
+        # one after the second (lighter) — prevents the deeper classifier from overfitting
+        self.classifier = nn.Sequential(
+            nn.Flatten(),                    # (B, 256, 4, 4) → (B, 4096)
+            nn.Linear(256 * 4 * 4, 512),    # (B, 4096) → (B, 512)
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),            # (B, 512) → (B, 256)
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, 10),             # (B, 256) → (B, 10)
+        )
+
     def forward(self, x):
-        x = self.block1(x)
-        x = self.block2(x)
-        x = self.block3(x)
-        return x
+        x = self.block1(x)      # spatial feature extraction, level 1
+        x = self.block2(x)      # spatial feature extraction, level 2
+        x = self.block3(x)      # spatial feature extraction, level 3
+        x = self.block4(x)      # fine-grained discrimination, level 4
+        x = self.classifier(x)  # flatten → compress → 10 class scores
+        return x                 # shape: (B, 10)
 
 
-# ── Sanity check: trace one batch through Block 1 ────────────────────────────
+# ── Sanity check: trace one full batch end-to-end ────────────────────────────
 if __name__ == "__main__":
     model = CIFAR10_CNN()
     dummy_batch = torch.randn(64, 3, 32, 32)   # fake batch: 64 images, 3 channels, 32×32
 
     output = model(dummy_batch)
-    print(f"Input  shape : {dummy_batch.shape}")  # expect (64, 3,  32, 32)
-    print(f"Output shape : {output.shape}")        # expect (64, 32, 16, 16)
+    print(f"Input  shape : {dummy_batch.shape}")  # expect torch.Size([64, 3, 32, 32])
+    print(f"Output shape : {output.shape}")        # expect torch.Size([64, 10])
+
+    # Count total learnable parameters
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Total parameters : {total_params:,}")  # how many weights backprop will tune
+
