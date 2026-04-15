@@ -8,13 +8,13 @@ A convolutional neural network built from scratch in PyTorch, using OpenCV for i
 
 ### Training Curves — 75 epochs
 
-Loss drops cleanly from 1.6 → 0.03. Accuracy crosses the 90% target line around epoch 65 and holds.
+Accuracy crosses the 90% target line around epoch 65 and holds.
 
 ![Learning Curves](learning_curves.png)
 
 ### Confusion Matrix
 
-Strong diagonal across all 10 classes. The known weak spot is **cat ↔ dog** (798 and 838 correct respectively) — a structural limitation of 32×32 resolution where fine-grained features like whiskers and snout shape are lost during resize.
+Matrix across all 10 classes. The known weak spot is between **cat - dog** analysis (798 and 838 correct respectively) — a structural limitation of 32×32 resolution where fine-grained features like whiskers and snout shape are lost during resize.
 
 ![Confusion Matrix](confusion_matrix.png)
 
@@ -33,7 +33,7 @@ Strong diagonal across all 10 classes. The known weak spot is **cat ↔ dog** (7
 
 ---
 
-## Inference Example
+## Example
 
 Single-image prediction with top-3 confidence scores. Norwegian Forest Cat fed in — the dense fur texture collapses to a mottled blob at 32×32, causing the model to favour frog (similar texture profile) over cat. Domain shift at low resolution.
 
