@@ -13,7 +13,7 @@ CLASS_NAMES = [
     "dog", "frog", "horse", "ship", "truck"
 ]
 
-# ── Load trained model ────────────────────────────────────────────────────────
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model  = CIFAR10_CNN().to(device)
 model.load_state_dict(torch.load("cifar10_cnn.pth", map_location=device))
@@ -21,38 +21,25 @@ model.eval()
 
 
 def predict(image_path):
-    """
-    Load an image from disk, preprocess it, and return top-3 predictions.
-    This mimics what Stage 6 webcam inference would do per frame.
-    """
-
-    # Step 1: Load image with OpenCV — comes in as BGR, uint8, any size
+    """Return top-3 (label, confidence%) predictions for an image on disk."""
     bgr_frame = cv2.imread(image_path)
     if bgr_frame is None:
         raise FileNotFoundError(f"Could not load image: {image_path}")
 
-    # Step 2: Convert BGR → RGB
-    # opencv_transform expects RGB input (same as PIL images during training).
-    # In a webcam demo this would be the only change from the training pipeline.
     rgb_frame = cv2.cvtColor(bgr_frame, cv2.COLOR_BGR2RGB)
 
-    # Step 3: Run through the exact same preprocessing used during training
-    # augment=False → no random flipping or cropping during inference
     from PIL import Image
     pil_image = Image.fromarray(rgb_frame)
-    tensor = opencv_transform(pil_image, augment=False)  # (3, 32, 32)
-    tensor = tensor.unsqueeze(0).to(device)              # (1, 3, 32, 32) — batch of 1
+    tensor = opencv_transform(pil_image, augment=False)
+    tensor = tensor.unsqueeze(0).to(device)
 
-    # Step 4: Forward pass — no gradient needed, we're just predicting
     with torch.no_grad():
-        outputs = model(tensor)                          # (1, 10) raw scores
+        outputs = model(tensor)
 
-    # Step 5: Convert raw scores → probabilities using Softmax
-    # During training we skipped Softmax (CrossEntropyLoss handles it internally).
-    # For inference we apply it explicitly so scores sum to 1 and are interpretable.
-    probs = torch.softmax(outputs, dim=1).squeeze()      # (10,) probabilities
+    # Softmax not applied during training (CrossEntropyLoss handles it);
+    # apply explicitly here so confidences are interpretable probabilities.
+    probs = torch.softmax(outputs, dim=1).squeeze()
 
-    # Step 6: Get top-3 predictions
     top3_probs, top3_indices = torch.topk(probs, 3)
     results = [
         (CLASS_NAMES[idx.item()], prob.item() * 100)
@@ -68,12 +55,10 @@ def show_result(image_path):
     fig, (ax_img, ax_bar) = plt.subplots(1, 2, figsize=(10, 4),
                                           gridspec_kw={"width_ratios": [1, 1.5]})
 
-    # Left: the input image
     ax_img.imshow(rgb_display)
     ax_img.set_title("Input Image", fontsize=11)
     ax_img.axis("off")
 
-    # Right: horizontal bar chart of top-3 confidences
     labels = [r[0] for r in results]
     scores = [r[1] for r in results]
     colors = ["#2196F3", "#90CAF9", "#BBDEFB"]   # dark → light blue for rank 1→3
@@ -84,7 +69,6 @@ def show_result(image_path):
     ax_bar.set_title("Top-3 Predictions", fontsize=11)
     ax_bar.axvline(x=50, color="gray", linestyle="--", linewidth=0.8, alpha=0.5)
 
-    # Annotate each bar with its percentage
     for bar, score in zip(bars, scores[::-1]):
         ax_bar.text(min(score + 1, 97), bar.get_y() + bar.get_height() / 2,
                     f"{score:.1f}%", va="center", fontsize=9)
@@ -100,8 +84,6 @@ def show_result(image_path):
         print(f"  {rank}. {label:<12} {prob:.1f}%")
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
-# Usage: python stage6_inference.py path/to/image.jpg
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python stage6_inference.py <path_to_image>")

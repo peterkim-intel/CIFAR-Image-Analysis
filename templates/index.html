@@ -34,7 +34,6 @@
       padding: 56px 16px 80px;
     }
 
-    /* ── Page header ── */
     header {
       width: 100%;
       max-width: 520px;
@@ -51,7 +50,6 @@
       margin-top: 5px;
     }
 
-    /* ── Main panel ── */
     .panel {
       width: 100%;
       max-width: 520px;
@@ -61,7 +59,7 @@
       overflow: hidden;
     }
 
-    /* ── Drop zone ── */
+
     #drop-zone {
       padding: 48px 32px;
       text-align: center;
@@ -94,7 +92,6 @@
       font-size: 0.8rem; color: var(--muted); margin-top: 4px; display: block;
     }
 
-    /* ── Footer row inside panel ── */
     .panel-footer {
       padding: 14px 20px;
       display: flex;
@@ -117,7 +114,6 @@
       color: var(--text);
     }
 
-    /* ── Submit button ── */
     #submit-btn {
       padding: 8px 18px;
       background: var(--accent);
@@ -134,7 +130,6 @@
     #submit-btn:hover:not(:disabled) { opacity: 0.85; }
     #submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* ── Preview ── */
     #preview-wrap {
       display: none;
       position: relative;
@@ -162,13 +157,13 @@
     }
     #clear-btn:hover { background: rgba(192,57,43,0.7); }
 
-    /* ── Divider ── */
+
     .divider {
       height: 1px;
       background: var(--border);
     }
 
-    /* ── Results ── */
+
     #results {
       display: none;
       padding: 24px 24px 20px;
@@ -225,7 +220,7 @@
     .rank-2 .bar-fill { background: var(--bar2); }
     .rank-3 .bar-fill { background: var(--bar3); }
 
-    /* ── Error ── */
+
     #error-box {
       margin: 16px 20px;
       background: rgba(192,57,43,0.12);
@@ -237,7 +232,6 @@
       display: none;
     }
 
-    /* ── Spinner ── */
     .spinner {
       display: inline-block;
       width: 13px; height: 13px;
@@ -255,12 +249,12 @@
 
 <header>
   <h1>Image Classifier</h1>
-  <p>CIFAR-10 · 90.26% test accuracy · 10 classes</p>
+  <p>CIFAR-10 · 10 classes</p>
 </header>
 
 <div class="panel">
 
-  <!-- Drop zone (hidden when preview is shown) -->
+
   <div id="drop-zone">
     <div class="upload-icon">↑</div>
     <strong>Drop an image or click to browse</strong>
@@ -268,22 +262,20 @@
     <input type="file" id="file-input" accept="image/*" />
   </div>
 
-  <!-- Preview (shown after image loaded) -->
   <div id="preview-wrap">
     <img id="preview" src="" alt="Preview" />
     <button id="clear-btn" onclick="clearImage()">✕ Clear</button>
   </div>
 
-  <!-- Bottom bar -->
   <div class="panel-footer">
     <span class="paste-hint">Paste with <kbd>Ctrl</kbd>+<kbd>V</kbd></span>
     <button id="submit-btn" onclick="submitImage()" disabled>Classify</button>
   </div>
 
-  <!-- Error -->
+
   <div id="error-box"></div>
 
-  <!-- Results -->
+
   <div id="results">
     <div class="divider" style="margin: 0 -24px 20px;"></div>
     <div class="winner">
@@ -309,12 +301,12 @@
   const errorBox    = document.getElementById("error-box");
   const bars        = document.getElementById("bars");
 
-  // ── File input ──────────────────────────────────────────────────────────────
+
   fileInput.addEventListener("change", () => {
     if (fileInput.files[0]) loadFile(fileInput.files[0]);
   });
 
-  // ── Drag and drop ───────────────────────────────────────────────────────────
+
   dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
   dropZone.addEventListener("dragleave", ()  => dropZone.classList.remove("dragover"));
   dropZone.addEventListener("drop", e => {
@@ -324,7 +316,7 @@
     if (f && f.type.startsWith("image/")) loadFile(f);
   });
 
-  // ── Paste anywhere on page ──────────────────────────────────────────────────
+
   document.addEventListener("paste", e => {
     const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
     if (!item) return;
@@ -360,7 +352,6 @@
     hideError();
   }
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
   async function submitImage() {
     submitBtn.disabled  = true;
     submitBtn.innerHTML = '<span class="spinner"></span>Running…';
@@ -393,7 +384,6 @@
     }
   }
 
-  // ── Render results ──────────────────────────────────────────────────────────
   function showResults(predictions) {
     document.getElementById("winner-name").textContent = predictions[0].label;
     document.getElementById("winner-pct").textContent  = predictions[0].confidence + "% confidence";

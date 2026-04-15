@@ -19,7 +19,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = CIFAR10_CNN().to(device)
 model.load_state_dict(torch.load("cifar10_cnn.pth", map_location=device))
-model.eval()   # disables Dropout — deterministic predictions
+model.eval()
 
 # ── Test data (no augmentation — we want clean evaluation) ───────────────────
 test_dataset = datasets.CIFAR10(root="./data", train=False, download=False,
@@ -33,8 +33,8 @@ all_labels = []
 with torch.no_grad():
     for images, labels in test_loader:
         images = images.to(device)
-        outputs = model(images)                       # (64, 10) raw scores
-        _, predicted = torch.max(outputs, dim=1)      # highest score = prediction
+        outputs = model(images)
+        _, predicted = torch.max(outputs, dim=1)
         all_preds.extend(predicted.cpu().numpy())
         all_labels.extend(labels.numpy())
 
@@ -56,17 +56,14 @@ for i, name in enumerate(CLASS_NAMES):
     acc     = 100 * correct / total
     print(f"{name:<12} {correct:>7} {total:>7} {acc:>8.1f}%")
 
-# ── Confusion matrix ──────────────────────────────────────────────────────────
-# Build a 10×10 matrix manually:
-# conf[i][j] = number of images with true label i predicted as label j
+
 num_classes = len(CLASS_NAMES)
 conf = np.zeros((num_classes, num_classes), dtype=int)
 
 for true, pred in zip(all_labels, all_preds):
     conf[true][pred] += 1
 
-# Normalize each row so colors represent % of that class (not raw counts)
-# Without normalization, large classes visually dominate even if accuracy is similar
+
 conf_norm = conf.astype(float) / conf.sum(axis=1, keepdims=True)
 
 # ── Plot ──────────────────────────────────────────────────────────────────────
@@ -82,7 +79,6 @@ ax.set_xlabel("Predicted label")
 ax.set_ylabel("True label")
 ax.set_title(f"Confusion Matrix — Test Accuracy: {overall_acc:.2f}%")
 
-# Annotate each cell with raw count
 for i in range(num_classes):
     for j in range(num_classes):
         color = "white" if conf_norm[i, j] > 0.5 else "black"
