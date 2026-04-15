@@ -10,37 +10,31 @@ class CIFAR10_CNN(nn.Module):
             nn.Conv2d(3, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),                           # (B, 32, 16, 16)
+            nn.MaxPool2d(2, 2),
         )
 
         self.block2 = nn.Sequential(
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),                           # (B, 64, 8, 8)
+            nn.MaxPool2d(2, 2),
         )
 
         self.block3 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(),                                    # (B, 128, 8, 8)
+            nn.ReLU(),
         )
 
-        # ── Block 4: Fine-grained discrimination ──────────────────────────────
-        # Added because the model plateaued at 88% — it could distinguish broad
-        # categories but struggled with similar classes (cat vs dog, car vs truck).
-        # An extra conv layer at the same spatial size (8×8) lets the model learn
-        # more subtle combinations of Block 3's features without further shrinking.
-        # We use two conv layers in sequence (no pool between) to double the
-        # receptive field depth cheaply — a pattern borrowed from VGG architecture.
+        #add extra conv layer for model to learn different combination of features from block3
         self.block4 = nn.Sequential(
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),# (B, 128, 8, 8) → (B, 256, 8, 8)
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),# (B, 256, 8, 8) → (B, 256, 8, 8)
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),                           # output: (B, 256, 4, 4)
+            nn.MaxPool2d(2, 2),
         )
 
         # 256 channels × 4×4 = 4,096 input features

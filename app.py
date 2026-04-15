@@ -1,13 +1,8 @@
 import io
-import os
 import base64
-
-import cv2
-import numpy as np
 import torch
 from PIL import Image
 from flask import Flask, request, jsonify, render_template
-from werkzeug.utils import secure_filename
 
 from stage2_preprocessing import opencv_transform
 from stage3_cnn import CIFAR10_CNN
@@ -61,10 +56,8 @@ def index():
 @app.route("/predict", methods=["POST"])
 def predict():
     """
-    Accepts either:
-      - A file upload via multipart/form-data  (field name: "file")
-      - A base64-encoded image via JSON        (field name: "image_b64")
-    Returns JSON: { predictions: [{label, confidence}, ...], error: str|null }
+    Accepts either a file upload via multipart/form-data or a base64-encoded image via JSON
+    Returns a json with predictions or error message.
     """
     try:
         pil_image = None

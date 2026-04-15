@@ -27,8 +27,6 @@ def opencv_transform(pil_image, augment=False):
         left = np.random.randint(0, 2 * pad)
         img = img[top:top+32, left:left+32]
 
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     img = img.astype(np.float32) / 255.0
     img = (img - CIFAR_MEAN) / CIFAR_STD

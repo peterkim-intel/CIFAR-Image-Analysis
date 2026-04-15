@@ -1,5 +1,6 @@
 import torchvision.datasets as datasets
 from stage2_preprocessing import opencv_transform
+from torch.utils.data import DataLoader
 
 CLASS_NAMES = [
     "airplane", "automobile", "bird", "cat", "deer",
@@ -18,7 +19,6 @@ print(f"  Image type : {type(image)}")
 print(f"  Image size : {image.size}")
 print(f"  Label      : {label} ({CLASS_NAMES[label]})")
 
-from torch.utils.data import DataLoader
 
 BATCH_SIZE = 64
 
